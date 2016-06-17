@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "armigOS-bootloader", "armigOS-bootloader\armigOS-bootloader.cproj", "{BDADE0A1-C8A1-4562-9932-DC2E311258A2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BDADE0A1-C8A1-4562-9932-DC2E311258A2}.Debug|AVR.ActiveCfg = Debug|AVR
+		{BDADE0A1-C8A1-4562-9932-DC2E311258A2}.Debug|AVR.Build.0 = Debug|AVR
+		{BDADE0A1-C8A1-4562-9932-DC2E311258A2}.Release|AVR.ActiveCfg = Release|AVR
+		{BDADE0A1-C8A1-4562-9932-DC2E311258A2}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
