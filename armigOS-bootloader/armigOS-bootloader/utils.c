@@ -37,7 +37,7 @@ void delay_ms(uint16_t count)
 	}
 }
 
-inline void round_robin(int *number, const int threshold)
+inline void round_robin(volatile int *number, const int threshold)
 {
 	(*number)++;
 	

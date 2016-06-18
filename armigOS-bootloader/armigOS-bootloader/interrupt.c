@@ -18,6 +18,15 @@ ISR(USART_RX_vect)
 	ringbuffer_append(uart_receive_echo());
 }
 
+inline void uart_enable_flow()
+{
+	if (FLOW_XOFF_SENT)
+	{
+		uart_send(FLOW_XON);
+		FLOW_XOFF_SENT = false;
+	}
+}
+
 void interrupt_init()
 {
 	uint8_t temp = MCUCR;

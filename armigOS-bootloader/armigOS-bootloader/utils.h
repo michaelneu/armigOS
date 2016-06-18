@@ -8,6 +8,6 @@
 void delay_ms(uint16_t ms);
 
 // Increment and apply round robin to a given address. 
-void round_robin(int *pointer, int threshold);
+void round_robin(volatile int *pointer, int threshold);
 
 #endif
