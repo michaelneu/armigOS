@@ -26,10 +26,6 @@ unsigned char uart_receive();
 unsigned char uart_receive_blocking();
 unsigned char uart_receive_echo();
 
-void uart_receive_string(char *buffer, int buffer_length);
-void uart_receive_typed_string(char *buffer, int buffer_length);
-void uart_read_line(char *buffer, int buffer_length);
-
 void uart_clear_terminal();
 
 #endif
