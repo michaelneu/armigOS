@@ -18,7 +18,7 @@ ISR(USART_RX_vect)
 	ringbuffer_append(uart_receive_echo());
 }
 
-inline void uart_enable_flow()
+void uart_enable_flow()
 {
 	if (FLOW_XOFF_SENT)
 	{

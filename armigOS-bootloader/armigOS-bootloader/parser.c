@@ -1,8 +1,22 @@
 #include "parser.h"
 #include <stdbool.h>
 
-#define IN_RANGE(c, from, to) (c >= from && c <= to)
-#define TO_BYTE(c) (IN_RANGE(c, '0', '9') ? c - '0' : (c - 'A' + 10))
+inline bool char_in_range(char c, char from, char to)
+{
+	return c >= from && c <= to;
+}
+
+inline int8_t char_hex_to_number(char c)
+{
+	if (char_in_range(c, '0', '9'))
+	{
+		return c - '0';
+	}
+	else
+	{
+		return c - 'A' + 10;
+	}
+}
 
 int8_t byte_string_to_byte(char string[])
 {
@@ -10,8 +24,8 @@ int8_t byte_string_to_byte(char string[])
 	
 	if (string[0] != ':' && string[1] != ':')
 	{
-		byte = TO_BYTE(string[0]);
-		byte = (byte << 4) + TO_BYTE(string[1]);
+		byte = char_hex_to_number(string[0]);
+		byte = (byte << 4) + char_hex_to_number(string[1]);
 	}
 	
 	return byte;
