@@ -34,3 +34,11 @@ void interrupt_init()
 	MCUCR = temp | (1 << IVCE);
 	MCUCR = temp | (1 << IVSEL);
 }
+
+void interrupt_reset()
+{
+	uint8_t temp = MCUCR;
+	
+	MCUCR = temp | (1 << IVCE);
+	MCUCR = temp & ~(1 << IVSEL);
+}

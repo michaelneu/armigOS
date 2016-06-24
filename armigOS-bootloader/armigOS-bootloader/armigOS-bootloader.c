@@ -4,18 +4,13 @@
 #include "ringbuffer.h"
 #include "uart.h"
 #include "utils.h"
+#include <stdbool.h>
 
-char read_character()
+inline void wait_for_ringbuffer()
 {
-	if (ringbuffer_can_be_read())
+	while (!ringbuffer_can_be_read())
 	{
-		uart_enable_flow();
-		
-		return ringbuffer_get_char();
-	}
-	else
-	{
-		return 0;
+		// busy wait for buffer to fill
 	}
 }
 
@@ -53,49 +48,75 @@ typedef enum {
 	RECORD_START_LINEAR_ADRESS = 5
 } RECORD_TYPE;
 
-void program_device()
+bool program_device()
 {
 	char pair[2];
-	int8_t current_byte, 
-			data_bytes_to_read = 0, 
-			record_type = 0, 
-			checksum = 0;
+	
+	uint8_t current_byte,
+			checksum = 0,
+			data_length = 0,
+			data_current_index = 0,
+			buffer[SPM_PAGESIZE],
+			buffer_index = 0;
 			
-	int16_t address = 0;
+	uint16_t address = 0;
+	
+	int32_t page_address = 0;
+	
+	bool new_address_required = true;
 		
 	DIGEST_STATE state = DIGEST_LENGTH;
-	
-	uint8_t buffer[SPM_PAGESIZE], 
-			buffer_index = 0;
+	RECORD_TYPE record_type = RECORD_DATA;
 
 	while (true)
 	{
-		pair[0] = read_character();
+		wait_for_ringbuffer();
+		
+		pair[0] = ringbuffer_get_char();
 		
 		switch (pair[0])
 		{
-			case 0:
 			case ':':
 			case '\n':
 			state = DIGEST_LENGTH;
+			checksum = 0;
 			break;
 			
 			default:
-			pair[1] = read_character();
+			wait_for_ringbuffer();
+			
+			pair[1] = ringbuffer_get_char();
 			current_byte = byte_string_to_byte(pair);
+			
+			checksum += current_byte;
 			
 			switch (state)
 			{
 				case DIGEST_LENGTH:
-				data_bytes_to_read = current_byte;
+				data_length = current_byte;
 				state = DIGEST_ADDRESS;
 				break;
 				
 				case DIGEST_ADDRESS:
 				address = current_byte;
-				pair[0] = read_character();
-				pair[1] = read_character();
-				address = (address << 8) + byte_string_to_byte(pair);
+				
+				wait_for_ringbuffer();
+				pair[0] = ringbuffer_get_char();
+				
+				wait_for_ringbuffer();
+				pair[1] = ringbuffer_get_char();
+				
+				current_byte = byte_string_to_byte(pair);
+				checksum += current_byte;
+				
+				address = (address << 8) + current_byte;
+				
+				if (new_address_required)
+				{
+					new_address_required = false;
+					page_address = address - address % SPM_PAGESIZE;
+				}
+				
 				state = DIGEST_RECORD_TYPE;
 				break;
 				
@@ -104,17 +125,25 @@ void program_device()
 				
 				if (record_type == RECORD_EOF)
 				{
-					return;
+					for (; buffer_index < SPM_PAGESIZE; buffer_index++)
+					{
+						buffer[buffer_index] = 0xFF;
+					}
+					
+					flash_program_page(page_address, buffer);
+					new_address_required = true;
+					
+					return true;
 				}
 				else
 				{
-					if (data_bytes_to_read == 0)
+					if (data_length == 0)
 					{
 						state = DIGEST_CHECKSUM;
 					}
 					else
 					{
-						buffer_index = 0;
+						data_current_index = 0;
 						state = DIGEST_DATA;
 					}
 					break;
@@ -124,35 +153,27 @@ void program_device()
 				buffer[buffer_index] = current_byte;
 				buffer_index++;
 				
-				if (buffer_index == data_bytes_to_read)
+				data_current_index++;
+				
+				if (data_current_index == data_length)
 				{
 					state = DIGEST_CHECKSUM;
 				}
 				break;
 				
 				case DIGEST_CHECKSUM:
-				checksum = data_bytes_to_read + address + record_type;
-				
-				for (buffer_index = 0; buffer_index < data_bytes_to_read; buffer_index++)
-				{
-					checksum += buffer[buffer_index];
-				}
-				
-				checksum += current_byte;
-				
 				if (checksum != 0)
 				{
-					uart_send_string("\n\nChecksum mismatch!");
-					return;
-				}
-				else
-				{
-					for (buffer_index = data_bytes_to_read; buffer_index < SPM_PAGESIZE; buffer_index++)
-					{
-						buffer[buffer_index] = 0;
-					}
+					uart_send_string("\n\nChecksum mismatch!\n");
 					
-					// flash_program_page(0, buffer);
+					return false;
+				}
+				else if (buffer_index == SPM_PAGESIZE)
+				{
+					flash_program_page(page_address, buffer);
+					new_address_required = true;
+					
+					buffer_index = 0;
 				}
 				
 				break;
@@ -179,13 +200,21 @@ int main(void)
 		
 		if (ringbuffer_can_be_read() && ringbuffer_get_char() == 'p')
 		{
-			program_device();
+			uart_send_string("\npaste an Intel hex file:\n");
+			
+			if (!program_device())
+			{
+				uart_send_string("\nerror processing hex file.\n");
+			}
 			
 			break;
 		}
 	}
 	
 	uart_clear_terminal();
+	
+	uart_send_string("\nstarting flashed program\n");
+	interrupt_reset();
 	
 	// start flashed program
 	void (*start)(void) = 0x0;
