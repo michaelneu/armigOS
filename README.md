@@ -1,6 +1,8 @@
 # armigOS
 
-Bootloader, flash utility (via serial bus) and operating system for the Atmel ATmega328P. 
+Bootloader/flash utility (via serial bus) for the Atmel ATmega328P. 
+
+In fact, this is a project to learn how to programmatically interact with embedded hardware (thus reimplementing e.g. a ringbuffer and using custom sleep functions). 
 
 ### Usage
 
