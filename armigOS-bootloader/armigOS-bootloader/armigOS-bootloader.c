@@ -64,9 +64,11 @@ bool program_device()
 	int32_t page_address = 0;
 	
 	bool new_address_required = true;
-		
+	
 	DIGEST_STATE state = DIGEST_LENGTH;
 	RECORD_TYPE record_type = RECORD_DATA;
+	
+	flash_erase_full();
 
 	while (true)
 	{
